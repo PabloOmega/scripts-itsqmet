@@ -38,6 +38,8 @@ def esperar_elemento(driver, xpath, type=By.XPATH, timeout=20):
         print(f"Error al esperar el elemento: {xpath}", e)
         driver.quit()
 
+option_materia = 12
+
 options = webdriver.EdgeOptions()
 options.add_experimental_option("detach", False)
 options.add_argument("--start-maximized")
@@ -71,8 +73,6 @@ driver.get("https://sisacad.itsqmet.edu.ec/ITSQMETPEAMicroplanificacion.aspx")
 
 # time.sleep(5)
 
-option_materia = 3 if time.strftime("%H") < "18" else 4
-
 esperar_elemento(driver, f"//select[@id='ContentPlaceHolder1_lstMaterias']/option[{option_materia}]")
 
 option = driver.find_element(By.XPATH, f"//select[@id='ContentPlaceHolder1_lstMaterias']/option[{option_materia}]")
@@ -80,7 +80,7 @@ option.click()
 
 time.sleep(5)
 
-# fecha = "29-04-2025"
+# fecha = "09-05-2025"
 fecha = time.strftime("%d-%m-%Y", time.localtime())
 
 esperar_elemento(driver, f"//table[@id='ContentPlaceHolder1_dtgDesarrolloCurso']//tr[td[text()='{fecha}']]")

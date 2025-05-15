@@ -10,7 +10,7 @@ options.add_experimental_option("detach", False)
 options.add_argument("--start-maximized")
 driver = webdriver.Edge()
 
-actividad = "ENLACE CLASE 9" # Cambiar diariamente según el aula virtual
+actividad = "ENLACE CLASE 13" # Cambiar diariamente según el aula virtual
 aria_label_curso = "OFFICE ESSENTIALS [Mod 1, ABR-SEP25 " + ("Mat" if time.strftime("%H") < "18" else "Ves. S-A")   # Nombre de la materia
 
 driver.get("https://campusvirtual.itsqmet.edu.ec/campusV/get/the/authorization/code")
@@ -54,7 +54,7 @@ boton_archivos = driver.find_element(By.ID, "3ed5b337-c2c9-4d5d-b7b4-84ff09a8fc1
 boton_archivos.click()
 
 # time.sleep(20)
-time.sleep(60*7)    # Espera 7 minutos para que se cargue la grabación
+time.sleep(60*5)    # Espera 7 minutos para que se cargue la grabación
 
 WebDriverWait(driver, 10).until(
     EC.presence_of_element_located((By.TAG_NAME, "iframe"))
