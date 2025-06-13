@@ -38,7 +38,7 @@ def esperar_elemento(driver, xpath, type=By.XPATH, timeout=20):
         print(f"Error al esperar el elemento: {xpath}", e)
         driver.quit()
 
-option_materia = 12
+option_materia = 13
 
 options = webdriver.EdgeOptions()
 options.add_experimental_option("detach", False)

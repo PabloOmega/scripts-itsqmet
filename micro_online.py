@@ -5,12 +5,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from openai import OpenAI
 import time
+from datetime import datetime, timedelta
 
 client = OpenAI()
-modulo = f"MATEMATICAS DISCRETAS {'MATUTINO' if time.strftime("%H") < "18" else 'VESPERTINO'}"  # Cambiar según el módulo actual 6 if time.strftime("%H") < "18" else 7
+modulo = "Modulo 2"  # Cambiar según el módulo actual
 automatico = True  # En verdadero guarda automáticamente la micro luego de dos minutos
-# fecha = "29-04-2025"
-fecha = time.strftime("%d-%m-%Y", time.localtime())
 
 def obtener_respuesta(prompt):
     response = client.chat.completions.create(
@@ -50,7 +49,13 @@ def esperar_elemento_invisible(driver, xpath, type=By.XPATH, timeout=120):
         return True
     except Exception as e:
         print(f"Error al esperar que el elemento sea invisible: {xpath}", e)
-        return False        
+        return False
+
+def obtener_fechas_semana():
+    hoy = datetime.now()
+    inicio_semana = hoy - timedelta(days=hoy.weekday())  # Lunes de la semana actual
+    fechas = [inicio_semana + timedelta(days=i) for i in range(5)]
+    return [fecha.strftime("%d-%m-%Y") for fecha in fechas]
 
 options = webdriver.EdgeOptions()
 options.add_experimental_option("detach", False)
@@ -70,63 +75,59 @@ time.sleep(1)
 tabs = driver.window_handles
 driver.switch_to.window(tabs[-1])
 
-# boton_docentes = driver.find_element(By.XPATH, "/html/body/form/div[3]/div[1]/div[2]/ul/li[4]")
-# boton_docentes = driver.find_element(By.XPATH, "//a[contains(text(), 'Docentes')]")
-# boton_docentes.click()
-# driver.execute_script("arguments[0].click();", boton_docentes)
-
 driver.get("https://sisacad.itsqmet.edu.ec/ITSQMETPEAMicroplanificacion.aspx")
 
 # time.sleep(5)
 
-# boton_micro = driver.find_element(By.XPATH, "/html/body/form/div[3]/div[1]/div[2]/ul/ul[4]/li[8]")
-# boton_micro = driver.find_element(By.XPATH, "//a[contains(text(), 'PEA Micro')]")
-# boton_micro.click()
+esperar_elemento(driver, "//select[@id='ContentPlaceHolder1_ddlModalidad']/option[@value='enlinea']")
+option = driver.find_element(By.XPATH, "//select[@id='ContentPlaceHolder1_ddlModalidad']/option[@value='enlinea']")
+option.click()
 
-# time.sleep(5)
-
-# option_materia = 6 if time.strftime("%H") < "18" else 7
+time.sleep(5)
 
 esperar_elemento(driver, f"//select[@id='ContentPlaceHolder1_lstMaterias']/option[contains(text(), '{modulo}')]")
 
 option = driver.find_element(By.XPATH, f"//select[@id='ContentPlaceHolder1_lstMaterias']/option[contains(text(), '{modulo}')]")
 option.click()
 
-time.sleep(5)
+fechas = obtener_fechas_semana()
+print(fechas)
+for fecha in fechas:
+    esperar_elemento(driver, f"//table[@id='ContentPlaceHolder1_dtgDesarrolloCurso']//tr[td[text()='{fecha}']]")
 
-esperar_elemento(driver, f"//table[@id='ContentPlaceHolder1_dtgDesarrolloCurso']//tr[td[text()='{fecha}']]")
+    time.sleep(5)
 
-time.sleep(5)
+    boton_agregar_micro = driver.find_element(By.XPATH, 
+                                            f"//table[@id='ContentPlaceHolder1_dtgDesarrolloCurso']//tr[td[text()='{fecha}']]//input")
+    driver.execute_script("arguments[0].click();", boton_agregar_micro)
 
-boton_agregar_micro = driver.find_element(By.XPATH, 
-                                          f"//table[@id='ContentPlaceHolder1_dtgDesarrolloCurso']//tr[td[text()='{fecha}']]//input")
-driver.execute_script("arguments[0].click();", boton_agregar_micro)
+    time.sleep(20)
 
-time.sleep(20)
+    esperar_elemento(driver, "//*[@id='ContentPlaceHolder1_txtSubtema']")
+    esperar_elemento(driver, "//*[@id='ContentPlaceHolder1_txtObjetivoClase']")
+    esperar_elemento(driver, "//*[@id='ContentPlaceHolder1_txtContenidoEjecutado']")
+    # esperar_elemento(driver, "//*[@id='ContentPlaceHolder1_rblAvance_0']")
 
-esperar_elemento(driver, "//*[@id='ContentPlaceHolder1_txtSubtema']")
-esperar_elemento(driver, "//*[@id='ContentPlaceHolder1_txtObjetivoClase']")
-esperar_elemento(driver, "//*[@id='ContentPlaceHolder1_txtContenidoEjecutado']")
-# esperar_elemento(driver, "//*[@id='ContentPlaceHolder1_rblAvance_0']")
+    contenido = driver.find_element(By.ID, "ContentPlaceHolder1_txtSubtema")
+    objetivo = driver.find_element(By.ID, "ContentPlaceHolder1_txtObjetivoClase")
+    contenido_ejecutado = driver.find_element(By.ID, "ContentPlaceHolder1_txtContenidoEjecutado")
+    opcion_100 = driver.find_element(By.ID, "ContentPlaceHolder1_rblAvance_0")
+    objetivo.send_keys(obtener_objetivo(contenido.text))
+    contenido_ejecutado.send_keys(obtener_contenido_ejecutado(contenido.text))
+    opcion_100.click()
 
-contenido = driver.find_element(By.ID, "ContentPlaceHolder1_txtSubtema")
-objetivo = driver.find_element(By.ID, "ContentPlaceHolder1_txtObjetivoClase")
-contenido_ejecutado = driver.find_element(By.ID, "ContentPlaceHolder1_txtContenidoEjecutado")
-opcion_100 = driver.find_element(By.ID, "ContentPlaceHolder1_rblAvance_0")
-objetivo.send_keys(obtener_objetivo(contenido.text))
-contenido_ejecutado.send_keys(obtener_contenido_ejecutado(contenido.text))
-opcion_100.click()
+    cerrado = esperar_elemento_invisible(driver, "//*[@id='mdlMicro']")
 
-cerrado = esperar_elemento_invisible(driver, "//*[@id='mdlMicro']")
+    if automatico and not cerrado:
+        print("Llenando automaticamente...")
+        boton_guardar = driver.find_element(By.ID, "ContentPlaceHolder1_btnSave")
+        driver.execute_script("arguments[0].click();", boton_guardar)
+    elif not cerrado:
+        print("Sigues ahí?")
+        driver.quit()
+        exit()
+        break
 
-if automatico and not cerrado:
-    boton_guardar = driver.find_element(By.ID, "ContentPlaceHolder1_btnSave")
-    driver.execute_script("arguments[0].click();", boton_guardar)
-elif not cerrado:
-    print("Sigues ahí?")
-    driver.quit()
-    exit()
-
-time.sleep(30)
+time.sleep(60)
 
 # driver.quit()

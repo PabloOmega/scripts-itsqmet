@@ -4,145 +4,176 @@ from selenium.webdriver.edge.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+from datetime import datetime, timedelta
+
+def numero_dia_clase(fecha_inicio_str: str, fecha_actual=None):
+    fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d")
+
+    if fecha_actual < fecha_inicio:
+        print("El módulo aún no ha comenzado.")
+        exit(0)
+    
+    dia_clase = 0
+    fecha_iter = fecha_inicio
+
+    while fecha_iter <= fecha_actual:
+        if fecha_iter.weekday() < 5:
+            dia_clase += 1
+        fecha_iter += timedelta(days=1)
+
+    if dia_clase > 20:
+        print("El módulo ha terminado.")
+        exit(0)
+    else:
+        return dia_clase
 
 options = webdriver.EdgeOptions()
 options.add_experimental_option("detach", False)
 options.add_argument("--start-maximized")
 driver = webdriver.Edge()
 
-actividad = "ENLACE CLASE 13" # Cambiar diariamente según el aula virtual
-aria_label_curso = "OFFICE ESSENTIALS [Mod 1, ABR-SEP25 " + ("Mat" if time.strftime("%H") < "18" else "Ves. S-A")   # Nombre de la materia
+fecha_inicio_modulo = "2025-05-26"  # Fecha de inicio del módulo
+numero_clase = numero_dia_clase(fecha_inicio_modulo, datetime.now())
+actividad = f"ENLACE CLASE {numero_clase}" # Cambiar diariamente según el aula virtual
+aria_label_curso = "MATEMATICAS DISCRETAS [Mod 2, ABR-SEP25 " + ("Mat" if time.strftime("%H") < "18" else "Ves. S-A")   # Nombre de la materia
+# link = "https://itsqmet.sharepoint.com/:v:/s/matematicasdiscretasmod2abrsep25vessalmmiv18h0019h30/ETmoHwg3P0hPuWrXQRjSDY4BBwmsypdrQ2XER0COJ5s0Cw?e=fVIgMZ"
+link = ""  # Si no se sube el video el mismo día, dejarlo vacío
+
+print(actividad)
 
 driver.get("https://campusvirtual.itsqmet.edu.ec/campusV/get/the/authorization/code")
 
 # time.sleep(5)
 
-try:
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/main/div[3]/div[2]/div[1]/div[2]/a/img"))
-    )
-except Exception as e:
-    print("Error al esperar el botón de teams:", e)
-    driver.quit()
-
-button_teams = driver.find_element(By.XPATH, "/html/body/div[1]/main/div[3]/div[2]/div[1]/div[2]/a/img")
-button_teams.click()
-
-tabs = driver.window_handles
-driver.switch_to.window(tabs[-1])
-
-try:
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.XPATH, f"//div[contains(@aria-label, '{aria_label_curso}')]"))
-    )
-except Exception as e:
-    print("Error al esperar el botón del equipo:", e)
-    driver.quit()
-
-equipo_teams = driver.find_element(By.XPATH, f"//div[contains(@aria-label, '{aria_label_curso}')]")
-equipo_teams.click()
-
-try:
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.ID, "3ed5b337-c2c9-4d5d-b7b4-84ff09a8fc1c"))
-    )
-except Exception as e:
-    print("Error al esperar el botón de archivos:", e)
-    driver.quit()
-
-boton_archivos = driver.find_element(By.ID, "3ed5b337-c2c9-4d5d-b7b4-84ff09a8fc1c")
-boton_archivos.click()
-
-# time.sleep(20)
-time.sleep(60*5)    # Espera 7 minutos para que se cargue la grabación
-
-WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.TAG_NAME, "iframe"))
-)
-
-iframes = driver.find_elements(By.TAG_NAME, "iframe")
-
-for iframe in iframes:
+if not link:
     try:
-        driver.switch_to.frame(iframe)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//*[@title='Recordings']"))
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/main/div[3]/div[2]/div[1]/div[2]/a/img"))
         )
-        print("Elemento encontrado en este iframe.")
-        break
-    except:
-        driver.switch_to.default_content()
+    except Exception as e:
+        print("Error al esperar el botón de teams:", e)
+        driver.quit()
 
-# print([element.text for element in driver.find_elements(By.TAG_NAME, "button")])
-# iframe = driver.find_elements(By.TAG_NAME, "iframe")[1]
-# iframe = driver.find_element(By.ID, "cacheable-iframe:3ed5b337-c2c9-4d5d-b7b4-84ff09a8fc1c")
-# driver.switch_to.frame(iframe)
-# iframe = iframes[1]
+    button_teams = driver.find_element(By.XPATH, "/html/body/div[1]/main/div[3]/div[2]/div[1]/div[2]/a/img")
+    button_teams.click()
 
-time.sleep(1)
-boton_recordings = driver.find_element(By.XPATH, "//*[@title='Recordings']")
-boton_recordings.click()
+    tabs = driver.window_handles
+    driver.switch_to.window(tabs[-1])
 
-# aria_label = "20250423"
-aria_label = time.strftime("%Y%m%d")    # Si es que no se sube el video el mismo día, cambiar la fecha manualmente
+    time.sleep(5)
 
-try:
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.XPATH, f"//div[contains(@aria-label, '{aria_label}')]"))
+    try:
+        WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.XPATH, f"//div[contains(@aria-label, '{aria_label_curso}')]"))
+        )
+    except Exception as e:
+        print("Error al esperar el botón del equipo:", e)
+        driver.quit()
+
+    equipo_teams = driver.find_element(By.XPATH, f"//div[contains(@aria-label, '{aria_label_curso}')]")
+    equipo_teams.click()
+
+    try:
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.ID, "3ed5b337-c2c9-4d5d-b7b4-84ff09a8fc1c"))
+        )
+    except Exception as e:
+        print("Error al esperar el botón de archivos:", e)
+        driver.quit()
+
+    boton_archivos = driver.find_element(By.ID, "3ed5b337-c2c9-4d5d-b7b4-84ff09a8fc1c")
+    boton_archivos.click()
+
+    time.sleep(1)
+    # time.sleep(60*2)    # Espera 7 minutos para que se cargue la grabación
+
+    WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located((By.TAG_NAME, "iframe"))
     )
-except Exception as e:
-    print("Error al esperar el contenedor de grabación:", e)
-    driver.quit()
 
-contenedor_grabacion = driver.find_elements(By.XPATH, f"//div[contains(@aria-label, '{aria_label}')]")[1]
-contenedor_grabacion.click()
+    iframes = driver.find_elements(By.TAG_NAME, "iframe")
 
-try:
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.XPATH, "//button[@aria-label='Más']"))
-    )
-except Exception as e:
-    print("Error al esperar el botón 'Más':", e)
-    driver.quit()
-time.sleep(1)
-botones_mas = driver.find_elements(By.XPATH, "//button[@aria-label='Más']")
-boton_mas = botones_mas[0]
-boton_mas.click()
+    for iframe in iframes:
+        try:
+            driver.switch_to.frame(iframe)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//*[@title='Recordings']"))
+            )
+            print("Elemento encontrado en este iframe.")
+            break
+        except:
+            driver.switch_to.default_content()
 
-try:
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, "//button[@name='Copiar vínculo']"))
-    )
-except Exception as e:
-    print("Error al esperar el botón 'Copiar vínculo':", e)
-    driver.quit()
+    # print([element.text for element in driver.find_elements(By.TAG_NAME, "button")])
+    # iframe = driver.find_elements(By.TAG_NAME, "iframe")[1]
+    # iframe = driver.find_element(By.ID, "cacheable-iframe:3ed5b337-c2c9-4d5d-b7b4-84ff09a8fc1c")
+    # driver.switch_to.frame(iframe)
+    # iframe = iframes[1]
 
-boton_copiar = driver.find_element(By.XPATH, "//button[@name='Copiar vínculo']")
-boton_copiar.click()
-# time.sleep(1)
+    time.sleep(5)
+    boton_recordings = driver.find_element(By.XPATH, "//*[@title='Recordings']")
+    boton_recordings.click()
 
-try:
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.XPATH, "//iframe[@title='Compartir']"))
-    )
-except Exception as e:
-    print("Error al esperar el iframe de compartir:", e)
-    driver.quit()
+    # aria_label = "20250423"
+    aria_label = time.strftime("%Y%m%d")    # Si es que no se sube el video el mismo día, cambiar la fecha manualmente
 
-iframe = driver.find_element(By.XPATH, "//iframe[@title='Compartir']")
-driver.switch_to.frame(iframe)
-# time.sleep(1)
+    try:
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, f"//div[contains(@aria-label, '{aria_label}')]"))
+        )
+    except Exception as e:
+        print("Error al esperar el contenedor de grabación:", e)
+        driver.quit()
 
-try:
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.XPATH, "//input[@aria-label='Vínculo creado']"))
-    )
-except Exception as e:
-    print("Error al esperar el input de vínculo creado:", e)
-    driver.quit()
+    contenedor_grabacion = driver.find_elements(By.XPATH, f"//div[contains(@aria-label, '{aria_label}')]")[1]
+    contenedor_grabacion.click()
 
-input_copiar = driver.find_element(By.XPATH, "//input[@aria-label='Vínculo creado']")
-link = input_copiar.get_attribute("value")
+    try:
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//button[@aria-label='Más']"))
+        )
+    except Exception as e:
+        print("Error al esperar el botón 'Más':", e)
+        driver.quit()
+    time.sleep(1)
+    botones_mas = driver.find_elements(By.XPATH, "//button[@aria-label='Más']")
+    boton_mas = botones_mas[0]
+    boton_mas.click()
+
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//button[@name='Copiar vínculo']"))
+        )
+    except Exception as e:
+        print("Error al esperar el botón 'Copiar vínculo':", e)
+        driver.quit()
+
+    boton_copiar = driver.find_element(By.XPATH, "//button[@name='Copiar vínculo']")
+    boton_copiar.click()
+    # time.sleep(1)
+
+    try:
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//iframe[@title='Compartir']"))
+        )
+    except Exception as e:
+        print("Error al esperar el iframe de compartir:", e)
+        driver.quit()
+
+    iframe = driver.find_element(By.XPATH, "//iframe[@title='Compartir']")
+    driver.switch_to.frame(iframe)
+    # time.sleep(1)
+
+    try:
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//input[@aria-label='Vínculo creado']"))
+        )
+    except Exception as e:
+        print("Error al esperar el input de vínculo creado:", e)
+        driver.quit()
+
+    input_copiar = driver.find_element(By.XPATH, "//input[@aria-label='Vínculo creado']")
+    link = input_copiar.get_attribute("value")
 print(f"Link de la grabación: {link}")
 
 tabs = driver.window_handles
