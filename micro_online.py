@@ -8,12 +8,12 @@ import time
 from datetime import datetime, timedelta
 
 client = OpenAI()
-modulo = "Modulo 2"  # Cambiar según el módulo actual
+modulo = "Modulo 4"  # Cambiar según el módulo actual
 automatico = True  # En verdadero guarda automáticamente la micro luego de dos minutos
 
 def obtener_respuesta(prompt):
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5-nano",
         messages=[
             {"role": "user", "content": prompt}
         ],
@@ -54,13 +54,15 @@ def esperar_elemento_invisible(driver, xpath, type=By.XPATH, timeout=120):
 def obtener_fechas_semana():
     hoy = datetime.now()
     inicio_semana = hoy - timedelta(days=hoy.weekday())  # Lunes de la semana actual
-    fechas = [inicio_semana + timedelta(days=i) for i in range(5)]
+    fechas = [inicio_semana + timedelta(days=i) for i in range(0,5)]
     return [fecha.strftime("%d-%m-%Y") for fecha in fechas]
 
 options = webdriver.EdgeOptions()
 options.add_experimental_option("detach", False)
 options.add_argument("--start-maximized")
-driver = webdriver.Edge()
+service = Service("msedgedriver.exe")
+driver = webdriver.Edge(service=service)
+# driver = webdriver.Edge()
 
 driver.get("https://campusvirtual.itsqmet.edu.ec/campusV/get/the/authorization/code")
 
@@ -84,6 +86,14 @@ option = driver.find_element(By.XPATH, "//select[@id='ContentPlaceHolder1_ddlMod
 option.click()
 
 time.sleep(5)
+
+periodo = "JULIO 2025 - OCTUBRE 2025"
+esperar_elemento(driver, f"//select[@id='ContentPlaceHolder1_ddlPeriodo']/option[@value='{periodo}']")
+
+opcion_periodo = driver.find_element(By.XPATH, f"//select[@id='ContentPlaceHolder1_ddlPeriodo']/option[contains(text(), '{periodo}')]")
+opcion_periodo.click()
+
+time.sleep(10)
 
 esperar_elemento(driver, f"//select[@id='ContentPlaceHolder1_lstMaterias']/option[contains(text(), '{modulo}')]")
 
@@ -112,6 +122,8 @@ for fecha in fechas:
     objetivo = driver.find_element(By.ID, "ContentPlaceHolder1_txtObjetivoClase")
     contenido_ejecutado = driver.find_element(By.ID, "ContentPlaceHolder1_txtContenidoEjecutado")
     opcion_100 = driver.find_element(By.ID, "ContentPlaceHolder1_rblAvance_0")
+    objetivo.clear()
+    contenido_ejecutado.clear()
     objetivo.send_keys(obtener_objetivo(contenido.text))
     contenido_ejecutado.send_keys(obtener_contenido_ejecutado(contenido.text))
     opcion_100.click()

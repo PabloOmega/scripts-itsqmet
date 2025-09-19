@@ -10,7 +10,7 @@ options.add_experimental_option("detach", False)
 options.add_argument("--start-maximized")
 driver = webdriver.Edge()
 
-actividad = "ENLACE CLASE 3" # Cambiar diariamente según el aula virtual
+actividad = "ENLACE CLASE 12" # Cambiar diariamente según el aula virtual
 aria_label_curso = "N-AUTOMATIZACIÓN CON PYTHON [Mod 6, ABR-TRANS-SEP25"
 
 driver.get("https://campusvirtual.itsqmet.edu.ec/campusV/get/the/authorization/code")
@@ -53,7 +53,7 @@ except Exception as e:
 boton_archivos = driver.find_element(By.ID, "3ed5b337-c2c9-4d5d-b7b4-84ff09a8fc1c")
 boton_archivos.click()
 
-# time.sleep(20)
+time.sleep(3)
 # time.sleep(60*5)    # Espera 7 minutos para que se cargue la grabación
 
 WebDriverWait(driver, 10).until(
@@ -61,12 +61,14 @@ WebDriverWait(driver, 10).until(
 )
 
 iframes = driver.find_elements(By.TAG_NAME, "iframe")
+print(f"Total de iframes encontrados: {len(iframes)}")
 
 for iframe in iframes:
     try:
+        # print(iframe)
         driver.switch_to.frame(iframe)
         WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//*[@title='Recordings']"))
+            EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Recordings')]"))
         )
         print("Elemento encontrado en este iframe.")
         break
@@ -79,23 +81,28 @@ for iframe in iframes:
 # driver.switch_to.frame(iframe)
 # iframe = iframes[1]
 
-time.sleep(1)
-boton_recordings = driver.find_element(By.XPATH, "//*[@title='Recordings']")
+# time.sleep(10)
+boton_recordings = driver.find_element(By.XPATH, "//*[contains(text(), 'Recordings')]")
 boton_recordings.click()
 
 # aria_label = "20250423"
 aria_label = time.strftime("%Y%m%d")    # Si es que no se sube el video el mismo día, cambiar la fecha manualmente
 
+print(f"Buscando grabación con aria-label: {aria_label}")
+
+time.sleep(5)
+
 try:
     WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.XPATH, f"//div[contains(@aria-label, '{aria_label}')]"))
+        EC.presence_of_element_located((By.XPATH, f"//span[contains(text(), '{aria_label}')]/../.."))
     )
 except Exception as e:
     print("Error al esperar el contenedor de grabación:", e)
     driver.quit()
 
-contenedor_grabacion = driver.find_elements(By.XPATH, f"//div[contains(@aria-label, '{aria_label}')]")[1]
-contenedor_grabacion.click()
+contenedor_grabacion = driver.find_element(By.XPATH, f"//span[contains(text(), '{aria_label}')]/../..")
+# contenedor_grabacion.click()
+driver.execute_script("arguments[0].click();", contenedor_grabacion)
 
 try:
     WebDriverWait(driver, 20).until(
@@ -111,13 +118,13 @@ boton_mas.click()
 
 try:
     WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, "//button[@name='Copiar vínculo']"))
+        EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Copiar vínculo')]/../.."))
     )
 except Exception as e:
     print("Error al esperar el botón 'Copiar vínculo':", e)
     driver.quit()
 
-boton_copiar = driver.find_element(By.XPATH, "//button[@name='Copiar vínculo']")
+boton_copiar = driver.find_element(By.XPATH, "//span[contains(text(), 'Copiar vínculo')]/../..")
 boton_copiar.click()
 # time.sleep(1)
 

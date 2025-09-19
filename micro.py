@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,14 +8,18 @@ from openai import OpenAI
 import time
 
 client = OpenAI()
-modulo = f"MATEMATICAS DISCRETAS {'MATUTINO' if time.strftime("%H") < "18" else 'VESPERTINO'}"  # Cambiar según el módulo actual 6 if time.strftime("%H") < "18" else 7
+# modulo = f"PROGRAMACIÓN DE SISTEMAS TELEMÁTICOS"
+modulo = "OFFICE ESSENTIALS"
+# modulo = f"CALIDAD DE SOFTWARE SQA {'MATUTINO' if time.strftime("%H") < "18" else 'VESPERTINO'}"  # Cambiar según el módulo actual 6 if time.strftime("%H") < "18" else 7
+# modulo = "N-AUTOMATIZACIÓN CON PYTHON"   # Nombre de la materia
 automatico = True  # En verdadero guarda automáticamente la micro luego de dos minutos
-# fecha = "29-04-2025"
+periodo = "JULIO 2025 - OCTUBRE 2025"
+# fecha = "04-07-2025"
 fecha = time.strftime("%d-%m-%Y", time.localtime())
 
 def obtener_respuesta(prompt):
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5-nano",
         messages=[
             {"role": "user", "content": prompt}
         ],
@@ -55,7 +60,9 @@ def esperar_elemento_invisible(driver, xpath, type=By.XPATH, timeout=120):
 options = webdriver.EdgeOptions()
 options.add_experimental_option("detach", False)
 options.add_argument("--start-maximized")
-driver = webdriver.Edge()
+service = Service("msedgedriver.exe")
+driver = webdriver.Edge(service=service)
+# driver = webdriver.Edge()
 
 driver.get("https://campusvirtual.itsqmet.edu.ec/campusV/get/the/authorization/code")
 
@@ -86,6 +93,12 @@ driver.get("https://sisacad.itsqmet.edu.ec/ITSQMETPEAMicroplanificacion.aspx")
 # time.sleep(5)
 
 # option_materia = 6 if time.strftime("%H") < "18" else 7
+esperar_elemento(driver, f"//select[@id='ContentPlaceHolder1_ddlPeriodo']/option[@value='{periodo}']")
+
+opcion_periodo = driver.find_element(By.XPATH, f"//select[@id='ContentPlaceHolder1_ddlPeriodo']/option[contains(text(), '{periodo}')]")
+opcion_periodo.click()
+
+time.sleep(10)
 
 esperar_elemento(driver, f"//select[@id='ContentPlaceHolder1_lstMaterias']/option[contains(text(), '{modulo}')]")
 
